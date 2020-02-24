@@ -1,19 +1,18 @@
 #pragma once
 
-#include "EventLoop.h"
-#include "Channel.h"
+#include <boost/noncopyable.hpp>
 #include <functional>
 
-class Address;
+#include "EventLoop.h"
+#include "Channel.h"
+#include "NetUtil.h"
 
-class Listener
+class Listener : boost::noncopyable
 {
 public:
-  typedef
-  std::function<void(int fd,const Address& addr)>
-  Callback;
+  using Callback = std::function<void(int sockfd, const sockaddr_in& peer_addr)>;
 
-  Listener(EventLoop* loop, const struct sockaddr_in& addr);
+  Listener(EventLoop* loop, const char* ip, int16_t port);
 
   void set_callback(const Callback& callback);
 
@@ -25,25 +24,23 @@ private:
 
   int m_sockfd;
 
+  Callback m_callback;
+
   Channel m_channel;
 };
 
 #include <sys/socket.h>
 
-int create_socket()
-{
-  return ::socket(
-    AF_INET,
-    SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
-    IPPROTO_TCP
-  );
-}
-
-Listener::Listener(EventLoop* loop, const struct sockaddr_in& addr)
+Listener::Listener(EventLoop* loop, const char* ip, int16_t port)
   : m_loop_(loop)
-  , m_sockfd(create_socket())
-  , m_channel(loop, m_sockfd)
+  , m_sockfd(NetUtil::listen(ip, port))
+  , m_channel(m_sockfd)
+  , m_callback(nullptr)
 {
-  int ret = ::bind(m_sockfd, sockaddr_cast(&addr), sizeof(addr));
+
 }
 
+void Listener::set_callback(const Callback& callback)
+{
+  m_callback = callback;
+}

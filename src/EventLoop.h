@@ -67,7 +67,7 @@ void EventLoop::loop()
 void EventLoop::process_active_events(std::vector<Channel*>& active_channels)
 {
   for (auto channel : active_channels) {
-    // channel->handle_event();
+    channel->handle_event();
   }
 }
 
@@ -89,9 +89,9 @@ void EventLoop::assert_in_loop_thread()
 void EventLoop::add_or_update_channel(Channel* channel)
 {
   if (has_channel(channel)) {
-    m_epoller.ctl(channel->fd(), EPOLL_CTL_MOD, channel->events());
+    m_epoller.ctl(channel->fd(), EPOLL_CTL_MOD, channel->events_watch());
   } else {
-    m_epoller.ctl(channel->fd(), EPOLL_CTL_ADD, channel->events());
+    m_epoller.ctl(channel->fd(), EPOLL_CTL_ADD, channel->events_watch());
     m_fd2channel_map.insert({channel->fd(), channel});
   }
 }

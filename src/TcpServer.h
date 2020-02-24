@@ -6,16 +6,18 @@
 #include <string>
 #include <functional>
 
+class TcpConnection;
+
 class TcpServer
 {
 public:
-  using Callback = std::function<void()>;
+  using Callback = std::function<void(const TcpConnection&)>;
 
   TcpServer(const char* server_ip, const uint16_t port);
 
   ~TcpServer();
 
-  void accept_connect_handle(EventLoop& eventLoop);
+  void accept_connect_handle(const TcpConnection* conn);
 
   void start();
 
@@ -28,13 +30,11 @@ private:
 
   Channel m_channel;
 
-  EventLoop m_loop;
+  EventLoop m_eventloop;
 
   Callback m_read_callback;
   Callback m_write_callback;
   Callback m_error_callback;
-
-
 };
 
 TcpServer::TcpServer(const char* server_ip, const uint16_t port)
@@ -42,16 +42,26 @@ TcpServer::TcpServer(const char* server_ip, const uint16_t port)
   , m_channel(m_sockfd)
 {
   m_channel.set_read_callback(std::bind(
-    TcpServer::accept_connect_handle,
-    this,
+    &TcpServer::accept_connect_handle,
     std::placeholders::_1
   ));
 
-  m_channel.set_events(EPOLLIN);
-  m_loop.add_channel(&m_channel);
+  m_channel.set_events_watch(EPOLLIN);
+  m_eventloop.add_or_update_channel(&m_channel);
 }
 
-void TcpServer::accept_connect_handle(EventLoop & eventLoop)
+TcpServer::~TcpServer()
+{
+  close(m_sockfd);
+}
+
+void TcpServer::start()
+{
+
+  m_eventloop.loop();
+}
+
+void TcpServer::accept_connect_handle(const TcpConnection* conn)
 {
 
 }
