@@ -12,15 +12,18 @@
 #include <netinet/tcp.h>
 #include <netdb.h>
 #include <string>
+#include <tuple>
+#include <bits/socket.h>
 
 class NetUtil
 {
 public:
   static int listen(const char* server_ip, const uint16_t port);
 
+  static std::tuple<int, sockaddr_in> accept(int server_sockfd);
+
 private:
   static struct sockaddr_in get_sockaddr_in(const char* server_ip, const uint16_t port);
-
 
 };
 
@@ -57,4 +60,25 @@ int NetUtil::listen(const char* server_ip, const uint16_t port)
   }
 
   return fd;
+}
+
+std::tuple<int, sockaddr_in>
+NetUtil::accept(int server_sockfd)
+{
+  struct sockaddr_in addr;
+  bzero(&addr, sizeof(addr));
+  socklen_t addrlen = sizeof(addr);
+
+  int conn_fd = accept4(
+    server_sockfd,
+    (struct sockaddr*)&addr,
+    &addrlen,
+    SOCK_NONBLOCK | SOCK_CLOEXEC
+  );
+
+  if (conn_fd < 0) {
+    // TODO
+  }
+
+  return {conn_fd, addr};
 }

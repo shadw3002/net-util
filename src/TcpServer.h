@@ -1,8 +1,7 @@
 #pragma once
 
 #include "NetUtil.h"
-#include "Channel.h"
-#include "EventLoop.h"
+#include "TcpListener.h"
 #include <string>
 #include <functional>
 
@@ -13,7 +12,7 @@ class TcpServer
 public:
   using Callback = std::function<void(const TcpConnection&)>;
 
-  TcpServer(const char* server_ip, const uint16_t port);
+  TcpServer(EventLoop* loop, const char* server_ip, const uint16_t port);
 
   ~TcpServer();
 
@@ -26,39 +25,32 @@ public:
   void set_error_callback(Callback callback);
 
 private:
-  int m_sockfd;
+  TcpListener m_listener;
 
-  Channel m_channel;
-
-  EventLoop m_eventloop;
+  EventLoop* m_loop;
 
   Callback m_read_callback;
   Callback m_write_callback;
   Callback m_error_callback;
 };
 
-TcpServer::TcpServer(const char* server_ip, const uint16_t port)
-  : m_sockfd(NetUtil::listen(server_ip, port))
-  , m_channel(m_sockfd)
+TcpServer::TcpServer(EventLoop* loop, const char* server_ip, const uint16_t port)
+  : m_loop(loop)
+  , m_listener(m_loop, server_ip, port)
 {
-  m_channel.set_read_callback(std::bind(
-    &TcpServer::accept_connect_handle,
-    std::placeholders::_1
-  ));
 
-  m_channel.set_events_watch(EPOLLIN);
-  m_eventloop.add_or_update_channel(&m_channel);
 }
 
 TcpServer::~TcpServer()
 {
-  close(m_sockfd);
+
 }
 
 void TcpServer::start()
 {
 
-  m_eventloop.loop();
+
+  m_listener.listen();
 }
 
 void TcpServer::accept_connect_handle(const TcpConnection* conn)

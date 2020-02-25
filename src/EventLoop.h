@@ -24,6 +24,10 @@ public:
 
   void add_or_update_channel(Channel* channel);
 
+  void add_channel(Channel* channel);
+
+  void update_channel(Channel* channel);
+
 private:
 
   void process_active_events(std::vector<Channel*>& active_channels);
@@ -93,6 +97,25 @@ void EventLoop::add_or_update_channel(Channel* channel)
   } else {
     m_epoller.ctl(channel->fd(), EPOLL_CTL_ADD, channel->events_watch());
     m_fd2channel_map.insert({channel->fd(), channel});
+  }
+}
+
+void EventLoop::add_channel(Channel* channel)
+{
+  if (has_channel(channel)) {
+    // TODO
+  } else {
+    m_epoller.ctl(channel->fd(), EPOLL_CTL_ADD, channel->events_watch());
+    m_fd2channel_map.insert({channel->fd(), channel});
+  }
+}
+
+void EventLoop::update_channel(Channel* channel)
+{
+  if (has_channel(channel)) {
+    m_epoller.ctl(channel->fd(), EPOLL_CTL_MOD, channel->events_watch());
+  } else {
+    // TODO
   }
 }
 
