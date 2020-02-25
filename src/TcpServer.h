@@ -25,9 +25,9 @@ public:
   void set_error_callback(Callback callback);
 
 private:
-  TcpListener m_listener;
-
   EventLoop* m_loop;
+
+  TcpListener m_listener;
 
   Callback m_read_callback;
   Callback m_write_callback;
@@ -48,8 +48,6 @@ TcpServer::~TcpServer()
 
 void TcpServer::start()
 {
-
-
   m_listener.listen();
 }
 

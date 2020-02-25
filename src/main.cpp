@@ -1,7 +1,10 @@
+#include "EventLoop.h"
 #include "TcpServer.h"
 
 int main()
 {
-  TcpServer server("127.0.0.1", 66366);
+  EventLoop loop;
+  TcpServer server(&loop, "127.0.0.1", 66366);
   server.start();
+  loop.loop();
 }

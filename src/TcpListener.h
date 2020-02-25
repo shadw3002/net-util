@@ -14,6 +14,8 @@ public:
 
   TcpListener(EventLoop* loop, const char* ip, int16_t port);
 
+  ~TcpListener();
+
   void set_callback(const Callback& callback);
 
   void listen();
@@ -39,7 +41,7 @@ TcpListener::TcpListener(EventLoop* loop, const char* ip, int16_t port)
   , m_channel(m_loop, m_sockfd)
   , m_callback(nullptr)
 {
-  m_channel.set_read_callback(std::bind(accept_connection, this));
+  m_channel.set_read_callback(std::bind(&TcpListener::accept_connection, this));
 }
 
 TcpListener::~TcpListener()
@@ -55,7 +57,7 @@ void TcpListener::listen()
     // TODO
   }
 
-  m_channel.set_events_watch;
+  m_channel.enable_read();
 }
 
 void TcpListener::set_callback(const Callback& callback)
@@ -63,9 +65,14 @@ void TcpListener::set_callback(const Callback& callback)
   m_callback = callback;
 }
 
+#include <iostream>
+
 void TcpListener::accept_connection()
 {
   auto [conn_fd, peer_addr] = NetUtil::accept(m_sockfd);
+
+  std::cout << conn_fd << std::endl;
+
   if (conn_fd >= 0) {
     if (m_callback) m_callback(conn_fd, peer_addr);
     else close(m_sockfd); // TODO
