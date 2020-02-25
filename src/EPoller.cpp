@@ -50,9 +50,9 @@ void EPoller::poll(std::vector<Channel*>& active_channels)
   std::cout << "new events: " << num_events << std::endl;
 
   if (num_events > 0) {
-    for (auto& event: m_events) {
-      Channel* channel = static_cast<Channel*>(event.data.ptr);
-      channel->set_events_recv(event.events);
+    for (int i = 0; i < num_events; ++i) {
+      Channel* channel = static_cast<Channel*>(m_events[i].data.ptr);
+      channel->set_events_recv(m_events[i].events);
       active_channels.push_back(channel);
     }
   }

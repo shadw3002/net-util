@@ -35,7 +35,6 @@ void EventLoop::loop()
 void EventLoop::process_active_events()
 {
   for (auto channel : m_active_channels) {
-
     channel->handle_event();
   }
 }

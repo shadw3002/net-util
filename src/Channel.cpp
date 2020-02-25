@@ -55,6 +55,8 @@ int Channel::fd() const
 
 void Channel::handle_event()
 {
+  puts("handling");
+
 	if (m_events_recv & (EPOLLHUP | EPOLLERR))
 	{
 		if (m_error_callback) m_error_callback();

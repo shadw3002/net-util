@@ -16,7 +16,7 @@ public:
 
   ~TcpServer();
 
-  void accept_connect_handle(const TcpConnection* conn);
+
 
   void start();
 
@@ -25,6 +25,8 @@ public:
   void set_error_callback(Callback callback);
 
 private:
+  void accept_connect_handle(int sockfd, const sockaddr_in& peer_addr);
+
   EventLoop* m_loop;
 
   TcpListener m_listener;
@@ -38,7 +40,14 @@ TcpServer::TcpServer(EventLoop* loop, const char* server_ip, const uint16_t port
   : m_loop(loop)
   , m_listener(m_loop, server_ip, port)
 {
+  using namespace std::placeholders;
 
+  m_listener.set_callback(std::bind(
+    &TcpServer::accept_connect_handle,
+    this,
+    _1,
+    _2
+  ));
 }
 
 TcpServer::~TcpServer()
@@ -51,7 +60,7 @@ void TcpServer::start()
   m_listener.listen();
 }
 
-void TcpServer::accept_connect_handle(const TcpConnection* conn)
+void TcpServer::accept_connect_handle(int sockfd, const sockaddr_in& peer_addr)
 {
 
 }
