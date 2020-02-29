@@ -14,9 +14,9 @@ public:
 
   explicit ThreadPool(size_t num_threads);
 
-  ThreadPool() = delete;
+  ThreadPool() = default;
 
-  ThreadPool(ThreadPool&&) = delete;
+  ThreadPool(ThreadPool&&) = default;
 
   ~ThreadPool();
 
@@ -35,7 +35,7 @@ private:
 };
 
 ThreadPool::ThreadPool(size_t thread_count)
-  : m_data()
+  : m_data(std::make_shared<Data>())
 {
   for (size_t i = 0; i < thread_count; ++i) {
     std::thread([data = m_data] {

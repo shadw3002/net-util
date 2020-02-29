@@ -1,6 +1,5 @@
 #include "EventLoop.h"
 #include "CurrentThread.h"
-#include "Channel.h"
 #include <assert.h>
 #include <sys/eventfd.h>
 
@@ -47,8 +46,6 @@ void EventLoop::loop()
   while (!m_quit) {
     m_active_channels.clear();
     m_epoller.poll(m_active_channels);
-
-    puts("Poll done");
 
     process_active_events();
 
@@ -103,7 +100,7 @@ bool EventLoop::has_channel(Channel* channel)
 
 void EventLoop::push_functor(const Functor& functor)
 {
-  if (is_in_loop_thread) functor();
+  if (is_in_loop_thread()) functor();
   else queue_functor(functor);
 }
 
@@ -136,4 +133,13 @@ void EventLoop::do_pending_functors()
   }
 
   for (auto f : functors) f();
+}
+
+void EventLoop::remove_channel(Channel* channel)
+{
+  int fd = channel->fd();
+  m_fd2channel_map.erase(fd);
+  m_epoller.del_channel(channel);
+
+  delete channel;
 }

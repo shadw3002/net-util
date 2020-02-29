@@ -4,6 +4,7 @@
 #include <map>
 #include <functional>
 #include <mutex>
+#include "Channel.h"
 
 class EventLoop
 {
@@ -30,8 +31,12 @@ public:
 
   void wake_up();
 
-private:
   void queue_functor(const Functor& functor);
+
+  void remove_channel(Channel* channel);
+
+private:
+
 
   void process_active_events();
 

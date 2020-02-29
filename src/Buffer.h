@@ -125,8 +125,6 @@ class Buffer
 
   ssize_t readFd(int fd, int* savedErrno);
 
-  int write_fd(int fd);
-
  private:
 
   char* begin()
@@ -161,57 +159,3 @@ class Buffer
   size_t writerIndex_;
 };
 
-#include <errno.h>
-#include <memory.h>
-#include <sys/uio.h>
-#include <sys/socket.h>
-
-ssize_t Buffer::readFd(int fd, int* savedErrno)
-{
-  char extrabuf[65536];
-  struct iovec vec[2];
-  const size_t writable = writableBytes();
-  vec[0].iov_base = begin()+writerIndex_;
-  vec[0].iov_len = writable;
-  vec[1].iov_base = extrabuf;
-  vec[1].iov_len = sizeof extrabuf;
-  const ssize_t n = readv(fd, vec, 2);
-  if (n < 0) {
-    *savedErrno = errno;
-  } else if ((size_t)(n) <= writable) {
-    writerIndex_ += n;
-  } else {
-    writerIndex_ = buffer_.size();
-    append(extrabuf, n - writable);
-  }
-  return n;
-}
-
-int Buffer::write_fd(int fd)
-{
-
-	char * buff = begin() + readerIndex_;
-	size_t nToWrite = buffer_.size() - writerIndex_;
-	if (0 < nToWrite)
-	{
-		if (0 > writableBytes())
-		{
-			if (EINTR == errno || EAGAIN == errno)
-			{
-				return 1;
-			}
-			else
-			{
-				return -1;
-			}
-		}
-		readerIndex_ += writableBytes();
-	}
-
-	if (readerIndex_ == writerIndex_)
-	{
-		readerIndex_ = writerIndex_ = 0;
-		return 0;
-	}
-	return 1;
-}
