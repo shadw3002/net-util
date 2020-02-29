@@ -1,6 +1,7 @@
 #include "Channel.h"
 #include "EventLoop.h"
 #include <sys/epoll.h>
+#include <cstdlib>
 
 Channel::Channel(EventLoop* owner_loop, int fd)
   : m_owner_loop(owner_loop)
@@ -60,29 +61,19 @@ int Channel::fd() const
 
 void Channel::handle_event()
 {
-
-
-	if (m_events_recv & (EPOLLHUP | EPOLLERR))
-	{
-    puts("handle error");
-		if (m_error_callback) m_error_callback(this);
-		// TODO
-	}
-	else
-	{
-		if (m_events_recv & (EPOLLIN | EPOLLRDHUP))
-		{
-      puts("handle read");
-			if (m_read_callback) m_read_callback(this);
-		}
-		if (m_events_recv & EPOLLOUT)
-		{
-      puts("handle write");
-			if (m_write_callback) m_write_callback(this);
-		}
-	}
+  if ((m_events_recv & EPOLLHUP) && !(m_events_recv & EPOLLIN)) {
+    if (m_close_callback) m_close_callback(this);
+  }
+  if (m_events_recv & (EPOLLERR)) {
+    if (m_error_callback) m_error_callback(this);
+  }
+  if (m_events_recv & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)) {
+    if (m_read_callback) m_read_callback(this);
+  }
+  if (m_events_recv & EPOLLOUT) {
+    if (m_write_callback) m_write_callback(this);
+  }
 }
-
 void Channel::enable_read()
 {
   m_events_watch |= (EPOLLIN | EPOLLPRI);

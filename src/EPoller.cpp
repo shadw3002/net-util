@@ -62,18 +62,15 @@ void EPoller::poll(std::vector<Channel*>& active_channels)
 
 void EPoller::add_channel(Channel* channel)
 {
-  puts("epoll ctl add");
   ctl(EPOLL_CTL_ADD, channel);
 }
 
 void EPoller::mod_channel(Channel* channel)
 {
-  puts("epoll ctl mod");
   ctl(EPOLL_CTL_MOD, channel);
 }
 
 void EPoller::del_channel(Channel* channel)
 {
-  puts("epoll ctl del");
   ctl(EPOLL_CTL_DEL, channel);
 }

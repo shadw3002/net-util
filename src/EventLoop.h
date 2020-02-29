@@ -27,7 +27,7 @@ public:
 
   void update_channel(Channel* channel);
 
-  void push_functor(const Functor& functor);
+  void do_functor(const Functor& functor);
 
   void wake_up();
 

@@ -11,7 +11,8 @@ int main()
   });
 
   server.set_read_callback([](auto conn, auto buffer){
-    conn->send(buffer.retrieveAsString());
+    auto str = buffer->retrieveAsString();
+    conn->send(str);
   });
 
   server.start();

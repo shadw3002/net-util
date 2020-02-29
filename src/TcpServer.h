@@ -109,12 +109,12 @@ void TcpServer::accept_connect_handle(int sockfd, const sockaddr_in& peer_addr)
     &TcpServer::remove_connection, this, _1
   ));
 
-  ioloop->push_functor(std::bind(&TcpConnection::established, conn));
+  ioloop->do_functor(std::bind(&TcpConnection::established, conn));
 }
 
 void TcpServer::remove_connection(const TcpConnection::Ptr& conn)
 {
-  m_loop->push_functor(std::bind(&TcpServer::remove_connection_worker, this, conn));
+  m_loop->do_functor(std::bind(&TcpServer::remove_connection_worker, this, conn));
 }
 
 void TcpServer::remove_connection_worker(const TcpConnection::Ptr& conn)

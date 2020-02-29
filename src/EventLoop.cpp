@@ -28,13 +28,13 @@ EventLoop::EventLoop()
   , m_wakeup_channel(this, create_eventfd())
 {
   using namespace std::placeholders;
-  m_wakeup_channel.set_write_callback(std::bind(wakeup_read_handle, _1));
+  m_wakeup_channel.set_read_callback(std::bind(wakeup_read_handle, _1));
   m_wakeup_channel.enable_read();
 }
 
 EventLoop::~EventLoop()
 {
-
+  close(m_wakeup_channel.fd());
 }
 
 #include <iostream>
@@ -48,7 +48,7 @@ void EventLoop::loop()
     m_epoller.poll(m_active_channels);
 
     process_active_events();
-
+    do_pending_functors();
   }
 }
 
@@ -98,7 +98,7 @@ bool EventLoop::has_channel(Channel* channel)
   return m_fd2channel_map.find(channel->fd()) != m_fd2channel_map.end();
 }
 
-void EventLoop::push_functor(const Functor& functor)
+void EventLoop::do_functor(const Functor& functor)
 {
   if (is_in_loop_thread()) functor();
   else queue_functor(functor);

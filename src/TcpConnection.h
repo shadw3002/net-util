@@ -14,7 +14,7 @@ class TcpConnection : boost::noncopyable
 public:
   using Ptr = std::shared_ptr<TcpConnection>;
 
-  using ReadCompleteCallback = std::function<void(const Ptr&, Buffer&)>;
+  using ReadCompleteCallback = std::function<void(const Ptr&, Buffer*)>;
 
   using WriteCompleteCallback = std::function<void(const Ptr&)>;
 
@@ -146,10 +146,8 @@ void TcpConnection::handle_read()
   int ret_errno = 0;
   ssize_t n = m_buffer_in.readFd(m_channel->fd(), &ret_errno);
 
-  printf("bytes read: %u\n", n);
-
   if (n > 0) {
-    m_read_complete_cb(shared_from_this(), m_buffer_in);
+    m_read_complete_cb(shared_from_this(), &m_buffer_in);
   } else if (n == 0) {
     handle_close();
   } else {
@@ -198,11 +196,7 @@ void TcpConnection::handle_error()
 
 void TcpConnection::send(const std::string& message)
 {
-  if (m_loop->is_in_loop_thread()) {
-    send_worker(message);
-  } else {
-    m_loop->push_functor(std::bind(&TcpConnection::send_worker, this, message));
-  }
+  m_loop->do_functor(std::bind(&TcpConnection::send_worker, this, message));
 }
 
 void TcpConnection::send_worker(const std::string& message)
