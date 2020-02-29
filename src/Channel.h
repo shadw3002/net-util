@@ -1,13 +1,14 @@
 #pragma once
 
 #include <functional>
+#include "Buffer.h"
 
 class EventLoop;
 
 class Channel
 {
 public:
-  using Callback = std::function<void()>;
+  using Callback = std::function<void(Channel*)>;
 
   Channel(EventLoop* owner_loop, int fd);
 
@@ -30,6 +31,10 @@ public:
 
   void handle_event();
 
+  Buffer& buffer_in();
+
+  Buffer& buffer_out();
+
 private:
 
   void update();
@@ -45,5 +50,8 @@ private:
   Callback m_read_callback;
   Callback m_write_callback;
   Callback m_error_callback;
+
+  Buffer m_buffer_in;
+  Buffer m_buffer_out;
 };
 

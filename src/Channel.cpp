@@ -59,18 +59,18 @@ void Channel::handle_event()
 
 	if (m_events_recv & (EPOLLHUP | EPOLLERR))
 	{
-		if (m_error_callback) m_error_callback();
+		if (m_error_callback) m_error_callback(this);
 		// TODO
 	}
 	else
 	{
 		if (m_events_recv & (EPOLLIN | EPOLLRDHUP))
 		{
-			if (m_read_callback) m_read_callback();
+			if (m_read_callback) m_read_callback(this);
 		}
 		if (m_events_recv & EPOLLOUT)
 		{
-			if (m_write_callback) m_write_callback();
+			if (m_write_callback) m_write_callback(this);
 		}
 	}
 }
@@ -102,4 +102,14 @@ void Channel::disable_all()
 void Channel::update()
 {
   m_owner_loop->update_channel(this);
+}
+
+Buffer& Channel::buffer_in()
+{
+  return m_buffer_in;
+}
+
+Buffer& Channel::buffer_out()
+{
+  return m_buffer_out;
 }

@@ -71,8 +71,6 @@ void TcpListener::accept_connection()
 {
   auto [conn_fd, peer_addr] = NetUtil::accept(m_sockfd);
 
-  std::cout << "accept socket: " << conn_fd << std::endl;
-
   if (conn_fd >= 0) {
     if (m_callback) m_callback(conn_fd, peer_addr);
     else close(m_sockfd); // TODO

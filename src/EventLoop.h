@@ -3,7 +3,7 @@
 #include "EPoller.h"
 #include <map>
 #include <functional>
-
+#include <mutex>
 
 class EventLoop
 {
@@ -26,9 +26,16 @@ public:
 
   void update_channel(Channel* channel);
 
+  void push_functor(const Functor& functor);
+
+  void wake_up();
+
 private:
+  void queue_functor(const Functor& functor);
 
   void process_active_events();
+
+  void do_pending_functors();
 
   bool has_channel(Channel* channel);
 
@@ -44,4 +51,8 @@ private:
   EPoller m_epoller;
 
   std::vector<Functor> m_pending_functors;
+
+  std::mutex m_mtx;
+
+  Channel m_wakeup_channel;
 };

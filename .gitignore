@@ -1,2 +1,4 @@
 /build
 .vscode
+/src/*.o
+/src/main

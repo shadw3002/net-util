@@ -22,6 +22,12 @@ public:
 
   static std::tuple<int, sockaddr_in> accept(int server_sockfd);
 
+  static void nonblock(int sockfd);
+
+  static void nonagle(int sockfd, int optval = 1);
+
+  static std::tuple<std::string, uint16_t> show_sockaddr_in(const sockaddr_in& addr);
+
 private:
   static struct sockaddr_in get_sockaddr_in(const char* server_ip, const uint16_t port);
 
@@ -81,4 +87,45 @@ NetUtil::accept(int server_sockfd)
   }
 
   return {conn_fd, addr};
+}
+
+void NetUtil::nonblock(int sockfd)
+{
+	int ret = fcntl(sockfd, F_GETFL);
+	ret = ret | O_NONBLOCK;
+	if (fcntl(sockfd, F_SETFL, ret) == -1) {
+    // TODO
+  }
+}
+
+void NetUtil::nonagle(int sockfd, int optval)
+{
+  int ret = setsockopt(
+    sockfd,
+    IPPROTO_TCP,
+    TCP_NODELAY,
+    &optval,
+    static_cast<socklen_t>(sizeof(optval))
+  );
+
+	if (ret != 0) {
+    // TODO
+  }
+}
+
+std::tuple<std::string, uint16_t>
+NetUtil::show_sockaddr_in(const sockaddr_in& addr)
+{
+  char ip_c_str[INET_ADDRSTRLEN];
+
+  inet_ntop( // TODO
+    AF_INET,
+    &addr.sin_addr.s_addr,
+    ip_c_str,
+    sizeof(ip_c_str)
+  );
+
+  uint16_t port = ntohs(addr.sin_port);
+
+  return {std::string(ip_c_str), port};
 }

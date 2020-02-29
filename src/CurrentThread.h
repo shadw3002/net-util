@@ -4,12 +4,9 @@
 
 namespace CurrentThread {
   // 相当于每个线程的全局变量
-  __thread int t_cachedTid;
-  void cache_tid() {
-    if (t_cachedTid == 0) {
-      t_cachedTid = gettid();
-    }
-  }
+  extern __thread int t_cachedTid;
+
+  void cache_tid();
 
   inline int tid() {
     if (__builtin_expect(t_cachedTid == 0, 0)) {
@@ -17,6 +14,4 @@ namespace CurrentThread {
     }
     return t_cachedTid;
   }
-
-
 }
