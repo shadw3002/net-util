@@ -6,6 +6,7 @@
 #include "Channel.h"
 #include <memory>
 #include <functional>
+#include <any>
 #include "Buffer.h"
 
 class TcpConnection : boost::noncopyable
@@ -51,6 +52,12 @@ public:
 
   void set_connected_callback(ConnectedCallback cb);
 
+  void set_context(const std::any& context);
+
+  const std::any* context() const;
+
+  std::any* context();
+
 private:
 
   void send_worker(const std::string& message);
@@ -82,6 +89,8 @@ private:
   CloseCallback m_close_cb;
 
   ConnectedCallback m_conn_cb;
+
+  std::any m_context;
 };
 
 #include <iostream>
@@ -247,4 +256,19 @@ void TcpConnection::set_close_callback(CloseCallback cb)
 void TcpConnection::set_connected_callback(ConnectedCallback cb)
 {
   m_conn_cb = cb;
+}
+
+void TcpConnection::set_context(const std::any& context)
+{
+  m_context = context;
+}
+
+const std::any* TcpConnection::context() const
+{
+  return &m_context;
+}
+
+std::any&* TcpConnection::context()
+{
+  return &m_context;
 }
