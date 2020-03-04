@@ -268,7 +268,12 @@ const std::any* TcpConnection::context() const
   return &m_context;
 }
 
-std::any&* TcpConnection::context()
+std::any* TcpConnection::context()
 {
   return &m_context;
+}
+
+void TcpConnection::shutdown()
+{
+  
 }

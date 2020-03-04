@@ -21,8 +21,6 @@ public:
 
   bool ready() const;
 
-  const HttpRequest& request() const;
-
   void reset();
 
   const HttpRequest& request() const;
@@ -40,7 +38,13 @@ private:
 bool HttpContext::parse(Buffer* buffer)
 {
   const char CRLF[] = {'\r', '\n'};
+
+  bool loop_control;
   do {
+    loop_control = false;
+
+    printf("context state: %d\n", m_state);
+
     switch (m_state){
       case ExpectRequestLine: {
         const char* crlf = (char*)memmem(
@@ -55,7 +59,7 @@ bool HttpContext::parse(Buffer* buffer)
           if (ret) {
             buffer->retrieveUntil(crlf + 2);
             m_state = ExpectHeaders;
-            continue;
+            loop_control = true;
           } else {
             return false;
           }
@@ -85,10 +89,12 @@ bool HttpContext::parse(Buffer* buffer)
 
             m_request.add_header(field, value);
 
-            continue;
+            loop_control = true;
           } else { // 空行
             m_state = Done;
           }
+
+          buffer->retrieveUntil(crlf + 2);
         } else {
 
         }
@@ -106,7 +112,7 @@ bool HttpContext::parse(Buffer* buffer)
         break;
       }
     }
-  } while (false);
+  } while (loop_control);
 
   return true;
 }
@@ -149,10 +155,34 @@ bool HttpContext::parse_request_line(const char* begin, const char* end)
 
   // Version
   begin = space + 1;
-  if (end - begin != 8 || std::equal(begin, end - 1, "HTTP/1.")) return false;
-  if (*(end-1) == '1') m_request.set_version(HttpRequest::Version::Http11);
-  else if (*(end-1) == '0') m_request.set_version(HttpRequest::Version::Http10);
+  if (end - begin != 8 || !std::equal(begin, end - 1, "HTTP/1.")) return false;
+
+  char ch_end = *(end-1);
+  if (ch_end == '1') m_request.set_version(HttpRequest::Version::Http11);
+  else if (ch_end == '0') m_request.set_version(HttpRequest::Version::Http10);
   else return false;
 
   return true;
+}
+
+bool HttpContext::ready() const
+{
+  return m_state == State::Done;
+}
+
+void HttpContext::reset()
+{
+  m_state = State::ExpectRequestLine;
+  HttpRequest dummy;
+  m_request.swap(dummy);
+}
+
+const HttpRequest& HttpContext::request() const
+{
+  return m_request;
+}
+
+HttpRequest& HttpContext::request()
+{
+  return m_request;
 }

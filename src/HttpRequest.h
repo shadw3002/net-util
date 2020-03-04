@@ -60,7 +60,7 @@ private:
   std::string m_path;
   std::string m_query;
   std::map<std::string, std::string> m_headers;
-  std::string body;
+  std::string m_body;
 };
 
 HttpRequest::HttpRequest()

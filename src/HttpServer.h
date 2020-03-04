@@ -11,13 +11,16 @@
 class HttpServer : boost::noncopyable
 {
 public:
-  using HttpCallback = std::function<void(const HttpRequest&, HttpResponse&)>;
+  using HttpCallback = std::function<void(const HttpRequest&, HttpResponse*)>;
 
   HttpServer(const char* server_ip, uint16_t port);
 
   ~HttpServer();
 
   void start();
+
+  void set_http_callback(const HttpCallback& cb);
+
 private:
 
   void message_handle(TcpConnection::Ptr, Buffer*);
@@ -51,6 +54,11 @@ HttpServer::~HttpServer()
   delete m_loop;
 }
 
+void HttpServer::set_http_callback(const HttpCallback& cb)
+{
+  m_http_callback = cb;
+}
+
 void HttpServer::start()
 {
   m_tcpserver.start();
@@ -67,6 +75,7 @@ void HttpServer::message_handle(TcpConnection::Ptr conn, Buffer* buffer)
   }
 
   if (context->ready()) {
+    puts("context ready");
     request_handle(conn, context->request());
     context->reset();
   }
@@ -84,7 +93,18 @@ void HttpServer::connected_handle(TcpConnection::Ptr conn)
 
 void HttpServer::request_handle(TcpConnection::Ptr conn, const HttpRequest& request)
 {
+  auto connection = request.header("Connection");
+  bool close = !connection || *connection == "close"
+    || (request.version() == HttpRequest::Version::Http10
+    && *connection != "Keep-Alive");
+
   HttpResponse response;
-  m_http_callback(request, response);
-  conn->send(response.bytes());
+  response.set_keep_alive(!close);
+  m_http_callback(request, &response);
+
+  auto bytes_send = response.bytes();
+
+  printf("bytes send:\n%s", bytes_send.c_str());
+
+  conn->send(bytes_send);
 }
