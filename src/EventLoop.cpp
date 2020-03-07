@@ -3,6 +3,15 @@
 #include <assert.h>
 #include <sys/eventfd.h>
 
+auto less = [](auto a, auto b){
+  if (a->next_active().tv_sec < b->next_active().tv_sec)
+    return true;
+  if (a->next_active().tv_sec == b->next_active().tv_sec)
+    return a->next_active().tv_usec < b->next_active().tv_usec;
+
+  return false;
+};
+
 static int create_eventfd()
 {
   int evfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
@@ -23,11 +32,13 @@ static void wakeup_read_handle(Channel* channel)
 
 EventLoop::EventLoop()
   : m_looping(false)
-  , m_quit(false)
   , m_thread_id(CurrentThread::tid())
   , m_wakeup_channel(this, create_eventfd())
 {
   using namespace std::placeholders;
+
+  m_timerheap.set_comp(less);
+
   m_wakeup_channel.set_read_callback(std::bind(wakeup_read_handle, _1));
   m_wakeup_channel.enable_read();
 }
@@ -43,12 +54,35 @@ void EventLoop::loop()
 {
   m_looping = true;
 
-  while (!m_quit) {
+  while (!m_looping) {
+    int timeout = -1;
+    if (!m_timerheap.empty()) {
+      struct timeval now; gettimeofday(&now, NULL);
+      const struct timeval& min_time = m_timerheap.top()->next_active();
+      timeout = (min_time.tv_sec - now.tv_sec) * 1000
+        + ((min_time.tv_usec - now.tv_usec) / 1000)
+        + 100;
+
+      if (timeout < 0) timeout = 0;
+    }
+
     m_active_channels.clear();
-    m_epoller.poll(m_active_channels);
+    m_epoller.poll(m_active_channels, timeout);
 
     process_active_events();
     do_pending_functors();
+  }
+}
+
+void EventLoop::process_active_time_events()
+{
+  struct timeval now; gettimeofday(&now, NULL);
+
+  while (!m_timerheap.empty() && less(m_timerheap.top()->next_active(), now)) {
+    auto timer = *m_timerheap.top(); m_timerheap.pop();
+    timer->do_callback();
+    if (timer->is_repeat()) m_timerheap.push(timer);
+    else delete timer;
   }
 }
 
@@ -61,7 +95,7 @@ void EventLoop::process_active_events()
 
 void EventLoop::quit()
 {
-  m_quit = true;
+  m_looping = true;
 }
 
 bool EventLoop::is_in_loop_thread() const
@@ -142,4 +176,9 @@ void EventLoop::remove_channel(Channel* channel)
   m_epoller.del_channel(channel);
 
   delete channel;
+}
+
+void EventLoop::add_timer(Timer* timer)
+{
+  m_timerheap.push(timer);
 }

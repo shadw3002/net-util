@@ -5,11 +5,13 @@
 #include <functional>
 #include <mutex>
 #include "Channel.h"
+#include "Timer.h"
+#include "Heap.h"
 
 class EventLoop
 {
 public:
-  typedef std::function<void()> Functor;
+  using Functor = std::function<void()>;
 
   EventLoop();
 
@@ -17,26 +19,31 @@ public:
 
   void loop();
 
+  // 停止, 非即时
   void quit();
 
   bool is_in_loop_thread() const;
 
   void assert_in_loop_thread();
 
+  // 仅供 Channel 构造函数调用
   void add_channel(Channel* channel);
 
+  // 仅供 Channel 构造函数调用
   void update_channel(Channel* channel);
-
-  void do_functor(const Functor& functor);
-
-  void wake_up();
-
-  void queue_functor(const Functor& functor);
 
   void remove_channel(Channel* channel);
 
-private:
+  void do_functor(const Functor& functor);
 
+  void queue_functor(const Functor& functor);
+
+  void add_timer(Timer* timer);
+
+private:
+  void wake_up();
+
+  void process_active_time_events();
 
   void process_active_events();
 
@@ -45,7 +52,6 @@ private:
   bool has_channel(Channel* channel);
 
   bool m_looping;
-  bool m_quit;
 
   const pid_t m_thread_id;
 
@@ -60,4 +66,6 @@ private:
   std::mutex m_mtx;
 
   Channel m_wakeup_channel;
+
+  Heap<Timer*> m_timerheap;
 };

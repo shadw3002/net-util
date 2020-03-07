@@ -19,7 +19,7 @@ public:
 
   void del_channel(Channel* channel);
 
-  void poll(std::vector<Channel*>& active_channels);
+  void poll(std::vector<Channel*>& active_channels, int timeout = -1);
 
 private:
   int m_epfd;

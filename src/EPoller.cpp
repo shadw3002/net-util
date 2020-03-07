@@ -36,13 +36,13 @@ void EPoller::ctl(int op, Channel* channel)
 
 #include <iostream>
 
-void EPoller::poll(std::vector<Channel*>& active_channels)
+void EPoller::poll(std::vector<Channel*>& active_channels, int timeout)
 {
   int num_events = epoll_wait(
     m_epfd,
     m_events.data(),
     m_events.size(),
-    10000
+    timeout
   );
 
   if (num_events > 0) {
