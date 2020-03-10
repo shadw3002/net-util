@@ -1,3 +1,5 @@
+// copy from muduo
+
 #include "Buffer.h"
 #include <errno.h>
 #include <memory.h>

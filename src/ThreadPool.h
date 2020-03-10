@@ -6,7 +6,6 @@
 #include <queue>
 #include <thread>
 
-// from https://www.zhihu.com/question/27908489
 class ThreadPool
 {
 public:
@@ -40,7 +39,7 @@ ThreadPool::ThreadPool(size_t thread_count)
   for (size_t i = 0; i < thread_count; ++i) {
     std::thread([data = m_data] {
       std::unique_lock<std::mutex> lk(data->mtx);
-      for (;;) {
+      while(1) {
         if (!data->tasks.empty()) {
           auto current = std::move(data->tasks.front());
           data->tasks.pop();
